@@ -15,7 +15,7 @@
   - [FP8 KV Cache Garbled Output (GLM-5)](#fp8-kv-cache-garbled-output-glm-5)
   - [FP8 KV Cache Slow on Kimi K2.5 (SGLang)](#fp8-kv-cache-slow-on-kimi-k25-sglang)
   - [DeepGemm Scale Format NaN (NVFP4 on SM120)](#deepgemm-scale-format-nan)
-  - [NVFP4 KV Cache Incoherent Output (QSA / hybrid, vLLM 0.30.0)](#nvfp4-kv-cache-incoherent-output-qsa-hybrid-vllm-0300)
+  - [NVFP4 KV Cache Incoherent Output (QSA hybrid, vLLM 0.30.0)](#nvfp4-kv-cache-incoherent-output-qsa-hybrid-vllm-0300)
 - [Model Loading Errors](#model-loading-errors)
   - [Weight Size Mismatch (Qwen3.5 NVFP4)](#weight-size-mismatch-qwen35-nvfp4)
   - [MTP Weights Missing](#mtp-weights-missing)
@@ -233,7 +233,7 @@ export SGLANG_ENABLE_DEEP_GEMM=0
 
 ---
 
-### NVFP4 KV Cache Incoherent Output (QSA / hybrid, vLLM 0.30.0)
+### NVFP4 KV Cache Incoherent Output (QSA hybrid, vLLM 0.30.0)
 
 **Symptoms**: `--kv-cache-dtype nvfp4` produces incoherent output at **every**
 context length (short deterministic prompts fail too), with no error, no Xid
@@ -253,9 +253,11 @@ or head-major buffers pass, which is why the kernel itself is correct.
 VLLM_KV_CACHE_LAYOUT=BLHNC
 ```
 
-Quality is unaffected (no measurable loss vs FP8 KV); NVFP4 KV is ~1.7×
-slower in prefill, near-parity in decode, and buys the larger KV pool
-(~2.5× vs ~2.0× for FP8). See
+Quality is 7/7 on the deterministic quality gate, matching FP8 KV (the
+5/6 needle score is a `max_tokens=512` truncation of the final answer
+line, not a retrieval miss — see the page below). NVFP4 KV is ~1.7× slower
+in prefill, near-parity in decode, and buys the larger KV pool (~2.5× vs
+~2.0× for FP8). See
 [`nvfp4-kv-cache-blnhnc-stride-mismatch.md`](nvfp4-kv-cache-blnhnc-stride-mismatch.md)
 for evidence, a minimal repro, and the measured trade-offs.
 

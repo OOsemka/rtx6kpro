@@ -169,10 +169,18 @@ box, same protocol, MTP on:
 
 Two takeaways:
 
-- **Quality is free.** nvfp4 KV shows no measurable quality loss vs fp8/bf16
-  on reasoning or long-context retrieval. The cost is asymmetric: it is
-  ~1.7× slower in **prefill** (TTFT) but nearly unchanged in **decode**
-  (TPOT). So the choice is driven by prefill time and capacity, not accuracy.
+- **Quality: no measurable loss, with one truncation caveat.** All three arms
+  pass 7/7 on the deterministic quality gate. On the ~253k-context
+  needle-retrieval protocol (`needle_multi.py`, SEED=42): fp8 scores 6/6,
+  nvfp4+BLHNC scores 5/6. The single nvfp4 miss is **not** a retrieval
+  failure — all five secret codes are found and the sum (3799) is computed
+  correctly in the model's reasoning; the final answer line is cut
+  mid-word (`…XEPSILON-19`) by the bench's `max_tokens=512` cap because the
+  nvfp4 run's reasoning trace was longer and hit the generation limit.
+  It is a harness truncation artifact, not a KV-quality degradation.
+  The cost is asymmetric: nvfp4 is ~1.7× slower in **prefill** (TTFT) but
+  nearly unchanged in **decode** (TPOT). The choice is driven by prefill
+  time and capacity, not accuracy.
 - **Capacity is the only real win.** The 2.50× pool is what makes C=3 at full
   context survive, where fp8 degrades. If your workload is single long
   sessions, fp8 is the better default (faster prefill, no layout flag needed).
